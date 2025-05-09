@@ -83,6 +83,8 @@ logger.info("Finished downloading and editing videos.")
 # Check if there were any failed downloads and report them
 # If there are any failed downloads, save them to a JSON file
 # in the reports directory
+filesystem.ensure_dir_exists(REPORTS_DIR)
+
 if len(failed_downloads) > 0:
     report_file_path = filesystem.join_path(
         REPORTS_DIR,
@@ -91,3 +93,34 @@ if len(failed_downloads) > 0:
 
     json_utils.save_json(report_file_path, DatasetVideo.to_dict(failed_downloads))
     logger.warning(f"Failed to download {len(failed_downloads)} videos. See report at {report_file_path} for more details.")
+
+
+# Create a summary report with stats per label
+summary_report = {}
+
+for label_id in json_dataset:
+    entries = json_dataset[label_id]
+    total = len(entries)
+    
+    failed = sum(1 for video in entries if DatasetVideo.from_dict(video) in failed_downloads)
+    downloaded = total - failed
+
+    # Get label text from the first video entry
+    if entries:
+        label_text = DatasetVideo.from_dict(entries[0]).text
+    else:
+        label_text = f"label_{label_id}"  # fallback if no videos
+
+    summary_report[label_text] = {
+        "total_videos": total,
+        "downloaded_videos": downloaded,
+        "failed_videos": failed
+    }
+
+# Save the summary report to a JSON file in the reports directory
+summary_file_path = filesystem.join_path(
+    REPORTS_DIR,
+    "summary_report.json"
+)
+json_utils.save_json(summary_file_path, summary_report)
+logger.info(f"Summary report saved at {summary_file_path}")

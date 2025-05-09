@@ -127,3 +127,16 @@ def split_file_name(file_path: str) -> str:
         str: The file extension.
     """
     return os.path.splitext(os.path.basename(file_path))
+
+
+def ensure_dir_exists(path: str) -> None:
+    """
+    Ensure that a directory exists. If it does not exist, create it.
+
+    Args:
+        path (str): The path to the directory to check or create.
+
+    Returns:
+        None
+    """
+    os.makedirs(path, exist_ok=True)
